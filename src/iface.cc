@@ -51,7 +51,7 @@ bool iface::_map_dirty = false;
 std::vector<struct pollfd> iface::_pollfds;
 
 iface::iface() :
-    _ifd(-1), _pfd(-1), _name("")
+    _ifd(-1), _pfd(-1), _name(""), _is_L2_interface(true)
 {
 }
 
@@ -138,7 +138,7 @@ ptr<iface> iface::open_pfd(const std::string& name, bool promiscuous)
 
     // Set up filter.
 
-    static struct sock_filter filter[] = {
+    static struct sock_filter L2_filter[] = {
         // Load the ether_type.
         BPF_STMT(BPF_LD | BPF_H | BPF_ABS,
             offsetof(struct ether_header, ether_type)),
@@ -160,10 +160,37 @@ ptr<iface> iface::open_pfd(const std::string& name, bool promiscuous)
         BPF_STMT(BPF_RET | BPF_K, 0)
     };
 
-    static struct sock_fprog fprog = {
-        8,
-        filter
+    static struct sock_filter L3_filter[] = {
+        // Load the ipv6 header
+        BPF_STMT(BPF_LD | BPF_B | BPF_ABS,
+            offsetof(struct ip6_hdr, ip6_nxt)),
+        // Bail if it's* not* IPPROTO_ICMPV6.
+        BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, IPPROTO_ICMPV6, 0, 3),
+        // Load the ICMPv6 type.
+        BPF_STMT(BPF_LD | BPF_B | BPF_ABS,
+            sizeof(ip6_hdr) + offsetof(struct icmp6_hdr, icmp6_type)),
+        // Bail if it's* not* ND_NEIGHBOR_SOLICIT.
+        BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, ND_NEIGHBOR_SOLICIT, 0, 1),
+        // Keep packet.
+        BPF_STMT(BPF_RET | BPF_K, (u_int32_t)-1),
+        // Drop packet.
+        BPF_STMT(BPF_RET | BPF_K, 0)
     };
+
+
+    struct sock_fprog fprog;
+
+    if ( ifa->_is_L2_interface )
+    {
+        fprog.filter = L2_filter;
+        fprog.len = sizeof(L2_filter)/sizeof(struct sock_filter);
+    }
+    else
+    {
+        fprog.filter = L3_filter;
+        fprog.len = sizeof(L3_filter)/sizeof(struct sock_filter);
+    }
+
 
     if (setsockopt(fd, SOL_SOCKET, SO_ATTACH_FILTER, &fprog, sizeof(fprog)) < 0) {
         logger::error() << "Failed to set filter";
@@ -296,6 +323,12 @@ ptr<iface> iface::open_ifd(const std::string& name)
 
     memcpy(&ifa->hwaddr, ifr.ifr_hwaddr.sa_data, sizeof(struct ether_addr));
 
+    if ( memcmp(&ifa->hwaddr, ether_aton("00:00:00:00:00:00"),sizeof(struct ether_addr)) == 0 )
+    {
+        logger::info() << "interface '" << name << "' is an L3 interface";
+        ifa->_is_L2_interface = false;
+    }
+
     _map_dirty = true;
 
     return ifa;
@@ -379,10 +412,10 @@ ssize_t iface::read_solicit(address& saddr, address& daddr, address& taddr, bool
     }
 
     struct ip6_hdr* ip6h =
-          (struct ip6_hdr* )(msg + ETH_HLEN);
+          (struct ip6_hdr* )(msg + ( _is_L2_interface ? ETH_HLEN : 0 ));
 
     struct nd_neighbor_solicit*  ns =
-        (struct nd_neighbor_solicit*)(msg + ETH_HLEN + sizeof(struct ip6_hdr));
+        (struct nd_neighbor_solicit*)(msg + ( _is_L2_interface ? ETH_HLEN : 0 ) + sizeof(struct ip6_hdr));
 
     taddr = ns->nd_ns_target;
     daddr = ip6h->ip6_dst;

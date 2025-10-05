@@ -130,6 +130,8 @@ private:
 
     // Constructor.
     iface();
+
+    bool _is_L2_interface;
 };
 
 NDPPD_NS_END
