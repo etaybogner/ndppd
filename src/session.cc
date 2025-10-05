@@ -111,7 +111,7 @@ session::~session()
     }
 }
 
-ptr<session> session::create(const ptr<proxy>& pr, const address& taddr, bool auto_wire, bool keepalive, int retries)
+ptr<session> session::create(const ptr<proxy>& pr, const address& taddr, bool auto_wire, int table, bool keepalive, int retries)
 {
     ptr<session> se(new session());
 
@@ -119,6 +119,7 @@ ptr<session> session::create(const ptr<proxy>& pr, const address& taddr, bool au
     se->_pr        = pr;
     se->_taddr     = taddr;
     se->_autowire  = auto_wire;
+    se->_table     = table;
     se->_keepalive = keepalive;
     se->_retries   = retries;
     se->_wired     = false;
@@ -206,6 +207,9 @@ void session::handle_auto_wire(const address& saddr, const std::string& ifname, 
         route_cmd << " " << "dev";
         route_cmd << " " << ifname;
 
+        if ( _table )
+            route_cmd << " " << "table" << " " << _table;
+
         logger::debug()
             << "session::system(" << route_cmd.str() << ")";
         
@@ -233,6 +237,9 @@ void session::handle_auto_wire(const address& saddr, const std::string& ifname, 
         }
         route_cmd << " " << "dev";
         route_cmd << " " << ifname;
+
+        if ( _table )
+            route_cmd << " " << "table" << " " << _table;
 
         logger::debug()
             << "session::system(" << route_cmd.str() << ")";
@@ -266,6 +273,9 @@ void session::handle_auto_unwire(const std::string& ifname)
         route_cmd << " " << "dev";
         route_cmd << " " << ifname;
 
+        if ( _table )
+            route_cmd << " " << "table" << " " << _table;
+
         logger::debug()
             << "session::system(" << route_cmd.str() << ")";
 
@@ -285,6 +295,9 @@ void session::handle_auto_unwire(const std::string& ifname)
         route_cmd << " " << std::string(_wired_via);
         route_cmd << " " << "dev";
         route_cmd << " " << ifname;
+
+        if ( _table )
+            route_cmd << " " << "table" << " " << _table;
 
         logger::debug()
             << "session::system(" << route_cmd.str() << ")";

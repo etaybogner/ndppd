@@ -185,6 +185,11 @@ static bool configure(ptr<conf>& cf)
             pr->autowire(false);
         else
             pr->autowire(*x_cf);
+
+        if (!(x_cf = pr_cf->find("table")))
+            pr->table(0);
+        else
+            pr->table(*x_cf);
         
         if (!(x_cf = pr_cf->find("keepalive")))
             pr->keepalive(true);

@@ -34,7 +34,9 @@ private:
     address _saddr, _daddr, _taddr;
     
     bool _autowire;
-    
+   
+    int _table;
+ 
     bool _keepalive;
     
     bool _wired;
@@ -75,7 +77,7 @@ public:
     // Destructor.
     ~session();
 
-    static ptr<session> create(const ptr<proxy>& pr, const address& taddr, bool autowire, bool keepalive, int retries);
+    static ptr<session> create(const ptr<proxy>& pr, const address& taddr, bool autowire, int table, bool keepalive, int retries);
 
     void add_iface(const ptr<iface>& ifa);
     

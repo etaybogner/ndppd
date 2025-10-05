@@ -32,7 +32,7 @@ static address all_nodes = address("ff02::1");
 std::list<ptr<proxy> > proxy::_list;
 
 proxy::proxy() :
-    _router(true), _ttl(30000), _deadtime(3000), _timeout(500), _autowire(false), _keepalive(true), _promiscuous(false), _retries(3)
+    _router(true), _ttl(30000), _deadtime(3000), _timeout(500), _autowire(false), _table(0), _keepalive(true), _promiscuous(false), _retries(3)
 {
 }
 
@@ -116,7 +116,7 @@ ptr<session> proxy::find_or_create_session(const address& taddr)
 
         if (ru->addr() == taddr) {
             if (!se) {
-                se = session::create(_ptr, taddr, _autowire, _keepalive, _retries);
+                se = session::create(_ptr, taddr, _autowire, _table, _keepalive, _retries);
             }
             
             if (ru->is_auto()) {
@@ -288,6 +288,16 @@ bool proxy::autowire() const
 void proxy::autowire(bool val)
 {
     _autowire = val;
+}
+
+bool proxy::table() const
+{
+    return _table;
+}
+
+void proxy::table(int table)
+{
+    _table = table;
 }
 
 int proxy::retries() const

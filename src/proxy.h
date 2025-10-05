@@ -69,7 +69,11 @@ public:
     bool autowire() const;
 
     void autowire(bool val);
-    
+
+    bool table() const;
+
+    void table(int table);    
+     
     int retries() const;
 
     void retries(int val);
@@ -108,6 +112,8 @@ private:
     bool _router;
     
     bool _autowire;
+
+    int _table;
     
     int _retries;
     
