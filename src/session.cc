@@ -210,7 +210,7 @@ void session::handle_auto_wire(const address& saddr, const std::string& ifname, 
         if ( _table )
             route_cmd << " " << "table" << " " << _table;
 
-        logger::debug()
+        logger::info()
             << "session::system(" << route_cmd.str() << ")";
         
         int ret = system(route_cmd.str().c_str());
@@ -241,7 +241,7 @@ void session::handle_auto_wire(const address& saddr, const std::string& ifname, 
         if ( _table )
             route_cmd << " " << "table" << " " << _table;
 
-        logger::debug()
+        logger::info()
             << "session::system(" << route_cmd.str() << ")";
 
         int ret = system(route_cmd.str().c_str());
@@ -276,7 +276,7 @@ void session::handle_auto_unwire(const std::string& ifname)
         if ( _table )
             route_cmd << " " << "table" << " " << _table;
 
-        logger::debug()
+        logger::info()
             << "session::system(" << route_cmd.str() << ")";
 
         int ret = system(route_cmd.str().c_str());
@@ -299,7 +299,7 @@ void session::handle_auto_unwire(const std::string& ifname)
         if ( _table )
             route_cmd << " " << "table" << " " << _table;
 
-        logger::debug()
+        logger::info()
             << "session::system(" << route_cmd.str() << ")";
 
         int ret = system(route_cmd.str().c_str());
