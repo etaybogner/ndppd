@@ -423,13 +423,14 @@ ssize_t iface::read_solicit(address& saddr, address& daddr, address& taddr, bool
 
     // Drop packets with hop limit less than 255 (might have been forwarded)
     if (ip6h->ip6_ctlun.ip6_un1.ip6_un1_hlim != 255) {
+        logger::info() << "Drop packets with hop limit less than 255 (might have been forwarded) hop_limit=" << ip6h->ip6_ctlun.ip6_un1.ip6_un1_hlim;
         return 0;
     }
     
     // Tag outgoing packets
     is_outgoing = t_saddr.sll_pkttype == PACKET_OUTGOING;
 
-    logger::debug() << "iface::read_solicit() saddr=" << saddr.to_string() << ", outgoing=" << is_outgoing
+    logger::info() << "iface::read_solicit() saddr=" << saddr.to_string() << ", outgoing=" << is_outgoing
                     << ", daddr=" << daddr.to_string() << ", taddr=" << taddr.to_string() << ", len=" << len;
 
     return len;
@@ -468,7 +469,7 @@ ssize_t iface::write_solicit(const address& taddr)
     daddr.addr().s6_addr[14] = taddr.const_addr().s6_addr[14];
     daddr.addr().s6_addr[15] = taddr.const_addr().s6_addr[15];
 
-    logger::debug() << "iface::write_solicit() taddr=" << taddr.to_string()
+    logger::info() << "iface::write_solicit() taddr=" << taddr.to_string()
                     << ", daddr=" << daddr.to_string();
 
     return write(_ifd, daddr, (uint8_t* )buf, sizeof(struct nd_neighbor_solicit)
@@ -498,7 +499,7 @@ ssize_t iface::write_advert(const address& daddr, const address& taddr, bool rou
     memcpy(buf + sizeof(struct nd_neighbor_advert) + sizeof(struct nd_opt_hdr),
            &hwaddr, 6);
 
-    logger::debug() << "iface::write_advert() daddr=" << daddr.to_string()
+    logger::info() << "iface::write_advert() daddr=" << daddr.to_string()
                     << ", taddr=" << taddr.to_string();
 
     return write(_ifd, daddr, (uint8_t* )buf, sizeof(struct nd_neighbor_advert) +
@@ -527,7 +528,7 @@ ssize_t iface::read_advert(address& saddr, address& taddr)
 
     taddr = ((struct nd_neighbor_solicit* )msg)->nd_ns_target;
 
-    logger::debug() << "iface::read_advert() saddr=" << saddr.to_string() << ", taddr=" << taddr.to_string() << ", len=" << len;
+    logger::info() << "iface::read_advert() saddr=" << saddr.to_string() << ", taddr=" << taddr.to_string() << ", len=" << len;
 
     return len;
 }
